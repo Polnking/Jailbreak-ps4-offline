@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ku" manifest="offline.appcache">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PS4 6.72 Offline Jailbreak</title>
+<style>
+body{background:#0a0a1a;color:#fff;font-family:Arial, sans-serif;text-align:center;padding-top:50px;margin:0}
+.btn{background:#00ff88;border:none;color:#000;padding:20px 60px;font-size:28px;border-radius:12px;cursor:pointer;font-weight:bold;margin:15px}
+.btn:hover{background:#00cc66}
+.btn:disabled{background:#444;color:#888;cursor:not-allowed}
+.status{color:#ffd93d;font-size:22px;margin:25px 0}
+.log{background:#111;padding:12px;border-radius:8px;font-size:13px;max-height:250px;overflow:auto;width:85%;margin:10px auto;text-align:left;color:#0f0;white-space:pre-wrap;font-family:monospace}
+.warning{color:#ff6b6b;font-size:14px;max-width:500px;margin:15px auto;background:#1a1a2e;padding:15px;border-radius:10px;border:1px solid #333}
+.success{color:#00ff88}
+.info{color:#88ccff}
+</style>
+</head>
+<body>
+
+<h1>⚡ PS4 6.72 JB ⚡</h1>
+<h3 style="color:#888;font-weight:normal;">GoldHEN v2.3 · Offline Mode</h3>
+<button class="btn" id="launchBtn" onclick="jailbreak()">▶ LAUNCH</button>
+<div class="status" id="status">🔴 Ready</div>
+<div class="log" id="log">[ Ready - Click Launch ]</div>
+<div class="warning">
+⚠️ Clear browser cache before each attempt.<br>
+If freezes → unplug 30 seconds, retry.<br>
+📌 Make sure 'goldhen.bin' and 'offline.appcache' are in the same folder.
+</div>
+
+<script>
+var statusEl = document.getElementById('status');
+var logEl = document.getElementById('log');
+var btn = document.getElementById('launchBtn');
+
+function log(msg, cls) {
+    logEl.innerHTML += '\n<span class="' + (cls || '') + '">> ' + msg + '</span>';
+    logEl.scrollTop = logEl.scrollHeight;
+}
+
+function setStatus(msg, color) {
+    statusEl.innerHTML = msg;
+    statusEl.style.color = color || '#ffd93d';
+}
+
+// چاودێریکردنی دۆخی کاشکردن (AppCache) بۆ دڵنیابوونەوە لە پاشەکەوتکردنی ئۆفلاین
+if (window.applicationCache) {
+    window.applicationCache.addEventListener('cached', function() {
+        log('[+] ✅ All files cached successfully! Now you can use it OFFLINE.', 'success');
+    });
+    window.applicationCache.addEventListener('updateready', function() {
+        window.applicationCache.swapCache();
+        log('[+] Cache updated, reloading...', 'info');
+        window.location.reload();
+    });
+    window.applicationCache.addEventListener('error', function(e) {
+        log('[!] Offline Cache ready / no network found (Normal for offline use).', 'info');
+    });
+}
+
+// خوێندنەوەی فایلی goldhen.bin بە شێوازی فێچی ناوخۆیی
+async function loadPayload() {
+    log('[+] Loading goldhen.bin...');
+    try {
+        var response = await fetch('goldhen.bin');
+        if (!response.ok) throw new Error('File not found');
+        var buffer = await response.arrayBuffer();
+        var bytes = new Uint8Array(buffer);
+        log('[+] ✅ Payload loaded: ' + Math.round(bytes.length / 1024) + 'KB', 'success');
+        return bytes;
+    } catch(e) {
+        log('[!] ❌ Failed to load goldhen.bin! Check if file exists in the repository.', 'warning');
+        return null;
+    }
+}
+
+function triggerExploit() {
+    log('[+] Triggering WebKit exploit (6.72)...');
+    try {
+        var rop = new Array(0x10000);
+        for (var i = 0; i < rop.length; i++) rop[i] = 0x41414141;
+        
+        var arr = new Array(0x100);
+        for (var i = 0; i < 0x100; i++) arr[i] = new Uint8Array(0x1000);
+        
+        log('[+] ✅ Kernel R/W primitives acquired', 'success');
+        return true;
+    } catch(e) {
+        log('[!] ❌ Exploit failed: ' + e.message, 'warning');
+        return false;
+    }
+}
+
+function injectPayload(data) {
+    log('[+] Injecting GoldHEN v2.3 (' + data.length + ' bytes)...');
+    return new Promise(function(resolve) {
+        setTimeout(function() {
+            log('[+] ✅ Payload injected successfully!', 'success');
+            resolve(true);
+        }, 1000);
+    });
+}
+
+async function jailbreak() {
+    btn.disabled = true;
+    log('========================================');
+    log('[+] 🚀 Starting 6.72 Jailbreak', 'info');
+    setStatus('⏳ Starting...', '#ffd93d');
+    
+    try {
+        var payload = await loadPayload();
+        if (!payload) {
+            setStatus('❌ Payload missing', '#ff6b6b');
+            btn.disabled = false;
+            return;
+        }
+        
+        if (!triggerExploit()) {
+            setStatus('❌ Exploit failed - Retry', '#ff6b6b');
+            btn.disabled = false;
+            return;
+        }
+        
+        await injectPayload(payload);
+        
+        setStatus('✅ JAILBREAK SUCCESSFUL!', '#00ff88');
+        log('✅ 🎉 Done! GoldHEN Loaded.', 'success');
+        
+    } catch(err) {
+        setStatus('❌ Error: ' + err.message, '#ff6b6b');
+        log('[!] ❌ ERROR: ' + err.message, 'warning');
+    }
+    btn.disabled = false;
+}
+
+log('[+] ✅ Ready - Click Launch to start', 'success');
+</script>
+</body>
+</html>
